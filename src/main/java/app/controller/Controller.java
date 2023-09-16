@@ -2,14 +2,17 @@ package app.controller;
 
 import app.model.DynamicCircle;
 import app.model.StaticCircle;
+import app.utils.Initializable;
 import app.utils.tools.MeasureTool;
+import app.view.ControlsName;
+import app.view.ControlsView;
+import controlP5.Toggle;
 import processing.core.PApplet;
 import processing.core.PVector;
 
 import java.util.*;
 import java.util.concurrent.*;
-
-import controlP5.*;
+import java.util.function.BooleanSupplier;
 
 public class Controller extends PApplet implements Initializable {
 
@@ -20,11 +23,12 @@ public class Controller extends PApplet implements Initializable {
     private Optional<DynamicCircle> draggedCircle;
     private ExecutorService singleExecutor, parallelExecutor;
     private ArrayList<Callable<Void>> taskList;
-    private ControlP5 controls;
+    private ControlsView controlsView;
 
     private float dt;
     private int newDirection;
     private boolean startFlag;
+    private BooleanSupplier toggleSupplier;
     private PVector mousePos;
 
     public Controller() {
@@ -47,7 +51,7 @@ public class Controller extends PApplet implements Initializable {
                 );
                 movableCircles.add(circle);
             }
-            movableCircles.sort((obj1, obj2)-> Float.compare(obj1.getAngle(),obj2.getAngle()));
+            sortCirclesList();
         }
     }
 
@@ -71,6 +75,27 @@ public class Controller extends PApplet implements Initializable {
         return taskList;
     }
 
+    public void sortCirclesList() {
+        movableCircles.sort((obj1, obj2)-> Float.compare(obj1.getAngle(),obj2.getAngle()));
+    }
+
+    public void resetMovingCirclesAngle() {
+        movableCircles.forEach(obj->{
+            obj.setAngle(randomGenerator.nextFloat()*2*MeasureTool.PI);
+            obj.setDirection(1);
+            obj.stopMoving();
+        });
+        sortCirclesList();
+    }
+
+    public void resetMovingCirclesColor() {
+        movableCircles.forEach(obj->{
+            obj.setR(1+randomGenerator.nextInt(255));
+            obj.setG(1+randomGenerator.nextInt(255));
+            obj.setB(1+randomGenerator.nextInt(255));
+        });
+    }
+
     public void drawPathCircle() {
         noFill();
         stroke(255,255,255);
@@ -85,10 +110,37 @@ public class Controller extends PApplet implements Initializable {
         });
     }
 
+    public void drawLines() {
+        stroke(255,255,255);
+        for (int i=0;i<movableCircles.size()-1;i++) {
+            PVector curCircleCenter = movableCircles.get(i).getCenter();
+            PVector nextCircleCenter = movableCircles.get(i+1).getCenter();
+            processing.line(curCircleCenter.x,curCircleCenter.y,nextCircleCenter.x,nextCircleCenter.y);
+        }
+
+    }
+
     private boolean checkMovableCircles() {
         return movableCircles.stream().anyMatch(obj->obj.getDirection()!=0);
     }
 
+    private void setControlsAction() {
+        controlsView.getControl(ControlsName.pause.getValue()).onClick(
+                callbackEvent -> startFlag=false
+        );
+        controlsView.getControl(ControlsName.resume.getValue()).onClick(
+                callbackEvent -> startFlag=true
+        );
+        controlsView.getControl(ControlsName.rand.getValue()).onClick(
+                callbackEvent -> singleExecutor.execute(this::resetMovingCirclesColor)
+        );
+        controlsView.getControl(ControlsName.reset.getValue()).onClick(
+                callbackEvent -> singleExecutor.execute(this::resetMovingCirclesAngle)
+        );
+        toggleSupplier = () -> ((Toggle) controlsView.getControl(ControlsName.lines.getValue())).getState();
+    }
+
+    @Override
     public void mousePressed() {
         singleExecutor.execute(()->{
             mousePos.set(mouseX,mouseY);
@@ -103,6 +155,7 @@ public class Controller extends PApplet implements Initializable {
         });
     }
 
+    @Override
     public void mouseDragged() {
         draggedCircle.ifPresent((circle)->{
             singleExecutor.execute(()->{
@@ -114,28 +167,56 @@ public class Controller extends PApplet implements Initializable {
         });
     }
 
+    @Override
     public void mouseReleased() {
         draggedCircle.ifPresent((circle)-> {
             singleExecutor.execute(() -> {
-                movableCircles.sort((obj1, obj2) -> Float.compare(obj1.getAngle(), obj2.getAngle()));
+                sortCirclesList();
                 movableCircles.forEach(DynamicCircle::stopMoving);
                 circle.setDirection(1);
                 draggedCircle = Optional.empty();
-                startFlag = true;
             });
         });
     }
 
+    @Override
     public void settings() {
         size(1600,800);
     }
 
+    @Override
     public void setup() {
         background(0);
         strokeWeight(3);
         initialize();
+        controlsView.createControls(0,0);
+        setControlsAction();
+//        controls.setFont(createFont("Cascadia Mono",15));
+//        controls.addButton("pause")
+//                .setValue(-1)
+//                .setPosition(10,30)
+//                .setSize(65,30).onClick(callbackEvent -> startFlag=false);
+//        controls.addButton("resume")
+//                .setValue(1)
+//                .setPosition(80,30)
+//                .setSize(65,30).onClick(callbackEvent -> startFlag=true);
+//        controls.addButton("rand colors")
+//                .setPosition(10,65)
+//                .setSize(135,30)
+//                .onClick(callbackEvent -> resetMovingCirclesColor());
+//        controls.addButton("reset")
+//                .setValue(0)
+//                .setPosition(10,100)
+//                .setSize(135,30)
+//                .onClick(callbackEvent -> resetMovingCirclesAngle());
+//        controls.addToggle("lines",false)
+//                .setPosition(10,135)
+//                .setSize(135,30)
+//                .setMode(ControlP5.SWITCH);
+
     }
 
+    @Override
     public void draw() {
         background(0);
         drawPathCircle();
@@ -146,6 +227,9 @@ public class Controller extends PApplet implements Initializable {
             } catch (InterruptedException exc) {
                 throw new RuntimeException(exc);
             }
+        }
+        if (toggleSupplier.getAsBoolean()) {
+            drawLines();
         }
     }
 
@@ -163,7 +247,7 @@ public class Controller extends PApplet implements Initializable {
         createPathCircle();
         createMovableCircles(pathCircle,circlesAmount);
         this.taskList = createMoveTaskList();
-        this.controls = new ControlP5(this);
+        this.controlsView = new ControlsView(this);
     }
 
 

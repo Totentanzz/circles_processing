@@ -1,4 +1,4 @@
-package app.controller;
+package app.utils;
 
 public interface Initializable {
 
