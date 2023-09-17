@@ -1,11 +1,13 @@
 package app.view;
 
 public enum ControlsName {
-    resume("resume"),
-    pause("pause"),
-    rand("rand colors"),
-    reset("reset"),
-    lines("lines");
+    resumeBtn("resume"),
+    pauseBtn("pause"),
+    randBtn("rand colors"),
+    resetBtn("reset"),
+    linesTgl("lines"),
+    circlesSld("circles"),
+    speedSld("speed");
 
     private String value;
 

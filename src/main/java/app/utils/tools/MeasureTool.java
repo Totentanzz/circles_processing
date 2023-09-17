@@ -51,11 +51,6 @@ public class MeasureTool {
               angleBaseToTarget2 = calculateAngleAtan2(coordOrigin,base,target2),
               absAngle1 = PApplet.abs(angleBaseToTarget1),
               absAngle2 = PApplet.abs(angleBaseToTarget2);
-        float deg1 = PApplet.degrees(angleBaseToTarget1), deg2 = PApplet.degrees(angleBaseToTarget2);
-        //System.out.println("RADIANS: " + absAngle1 + " " + absAngle2);
-        //System.out.println("DEGREES: " + deg1 + " " + deg2);
-        //System.out.println("RAZNITSA WITH PI: " + PApplet.abs(absAngle1 - PI) + " LESS THAN PI: " + (PApplet.abs(absAngle1 - PI) > DELTA));
-        //System.out.println("RAZNITSA WITH EACH OTHER: " + PApplet.abs(absAngle1 - absAngle2) + " LESS THAN OTHER: " + ((PApplet.abs(absAngle1 - absAngle2) > DELTA)));
         if ((PApplet.abs(absAngle1 - PI) > DELTA || !target1.equals(target2)) && ((target1.equals(target2)) || (PApplet.abs(absAngle1 - absAngle2) > DELTA))) {
             directionSign = (int) ((absAngle1 < absAngle2) ? Math.signum(angleBaseToTarget2) : Math.signum(angleBaseToTarget1));
             directionSign *= (Math.signum(angleBaseToTarget1)==Math.signum(angleBaseToTarget2)) ? -1 : 1;

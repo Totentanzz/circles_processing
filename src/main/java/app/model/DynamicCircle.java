@@ -12,7 +12,7 @@ public class DynamicCircle extends Circle {
     private int direction;
     private float angle;
     private float angularVelocity;
-    private final float angularAcceleration;
+    private float angularAcceleration;
 
 
     public DynamicCircle(StaticCircle pathCircle, PVector center, int radius, int mass, float force) {
@@ -40,13 +40,38 @@ public class DynamicCircle extends Circle {
         this.angularAcceleration = force/mass;
     }
 
+    public int getMass() {
+        return mass;
+    }
+
+    public void setMass(int mass) {
+        if (this.mass>0) {
+            this.mass = mass;
+            this.angularAcceleration = force/mass;
+        }
+    }
+
+    public float getForce() {
+        return force;
+    }
+
+    public void setForce(float force) {
+        if (this.force>0) {
+            this.force = force;
+            this.angularAcceleration = force/mass;
+        }
+    }
+
     public float getAngle() {
         return this.angle;
     }
 
     public void setAngle(float angle) {
         this.angle = angle;
-        this.center.set(pathCircle.center.x + pathCircle.radius * PApplet.cos(angle),pathCircle.center.y + pathCircle.radius * PApplet.sin(angle));
+        this.center.set(
+                pathCircle.center.x + pathCircle.radius * PApplet.cos(angle),
+                pathCircle.center.y + pathCircle.radius * PApplet.sin(angle)
+        );
     }
 
     public int getDirection() {
@@ -57,11 +82,14 @@ public class DynamicCircle extends Circle {
         this.direction = newDirection;
     }
 
-    public void moveAroundCircle(float dt) {
-        angularVelocity += angularAcceleration*direction*dt;
+    public float getAngularAcceleration() {
+        return angularAcceleration;
+    }
+
+    public void moveAroundCircle(float dt, float speedFactor) {
+        angularVelocity += angularAcceleration*direction*speedFactor*dt;
         angle += angularVelocity*dt;
-//        System.out.println("velocity of moving circle: " + angularVelocity);
-//        System.out.println("Current angle from (0,0): " + angle);
+        angle += (angle<0) ? 2*MeasureTool.PI : 0;
         center.x = pathCircle.center.x + pathCircle.radius * PApplet.cos(angle);
         center.y = pathCircle.center.y + pathCircle.radius * PApplet.sin(angle);
     }

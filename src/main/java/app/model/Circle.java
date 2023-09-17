@@ -25,6 +25,10 @@ public abstract class Circle {
         return this.center;
     }
 
+    public void setCenter(PVector center) {
+        this.center = center;
+    }
+
     public int getRadius() {
         return this.radius;
     }
@@ -51,10 +55,6 @@ public abstract class Circle {
 
     public void setB(int b) {
         this.b = b;
-    }
-
-    public void create() {
-        Controller.processing.circle(this.center.x,this.center.y,this.radius*2);
     }
 
     @Override
